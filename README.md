@@ -36,7 +36,7 @@ var b = MyObj(vint: 2, varr: [5, 6])
 macro withObj(body: untyped{nkStmtList}) =
   result = newStmtList()
   for item in body.items:
-    result.add: item.replaceAll: {
+    result.add: item.identsubs: {
       "vint": newDotExpr(bindSym "a", ident "vint"),
       "varr": newDotExpr(bindSym "a", ident "varr"),
       "primary": bindSym "a",

@@ -90,7 +90,7 @@ macro `case`*(stmt: NimNode): untyped =
           let fn = line[0]
           let fbody = line[1]
           if fn.kind in identlists and fn.strVal == "guard":
-            generated.and = replaceAll(fbody, cache)
+            generated.and = identsubs(fbody, cache)
             continue
         gbody.add line
       result.add nnkElifBranch.newTree(generated, gbody)
