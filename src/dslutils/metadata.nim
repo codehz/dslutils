@@ -4,6 +4,9 @@ type WithMetadata[T, M: typed] = distinct T
 
 converter `@`*[T, M: typed](source: WithMetadata[T, M]): T = T source
 
+type WithoutMetadata*[T] = concept value
+  `@`(value) is T
+
 template metadata(value: untyped) {.pragma.}
 template typedmetadata(value: typed) {.pragma.}
 
