@@ -1,3 +1,3 @@
-import ./dslutils/astpat
+import ./dslutils/[astpat, identsubs, metadata]
 
-export astpat
+export astpat, identsubs, metadata

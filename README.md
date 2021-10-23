@@ -1,6 +1,6 @@
 # A macro collection for creating DSL in nim
 
-Current modules: astpat, identsubs
+Current modules: astpat, identsubs, metadata
 
 ## ASTPAT: Do pattern match on nim ast
 
@@ -57,4 +57,25 @@ a.vint = 4
 a.varr[0] = 1
 a.fun()
 fun(b)
+```
+
+## METADATA: Attach metadata to any value
+
+Usage:
+```nim
+let value = 5 ~~ { meta: 1 }
+
+macro dumpMetadata(target: typed) =
+  let meta = target.metadata
+  for kv in meta:
+    echo treerepr kv
+
+dumpMetadata value
+```
+
+got:
+```
+ExprColonExpr
+  Ident "meta"
+  IntLit 1
 ```
