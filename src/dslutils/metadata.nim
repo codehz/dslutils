@@ -1,6 +1,6 @@
-import macros
+import std/macros
 
-type WithMetadata[T, M: typed] = distinct T
+type WithMetadata[T, M: typed] {.borrow: `.`.} = distinct T
 
 converter `@`*[T, M: typed](source: WithMetadata[T, M]): T = T source
 
@@ -9,9 +9,6 @@ type WithoutMetadata*[T] = concept value
 
 template metadata(value: untyped) {.pragma.}
 template typedmetadata(value: typed) {.pragma.}
-
-template `.`*[T](left: WithoutMetadata[T], field: untyped{nkIdent}): untyped =
-  (@left).field
 
 template `~~`*(value: typed, meta: untyped): untyped =
   type host {.metadata: meta.} = object
@@ -27,3 +24,21 @@ func `metadata`*(value: NimNode): NimNode =
   inst.expectKind nnkBracketExpr
   assert inst[0] == bindSym "WithMetadata"
   value.getTypeInst[2].getImpl[0][1][0][1]
+
+func withMetadata*(value: NimNode, meta: NimNode): NimNode =
+  result = newStmtList()
+  let vt = value.getTypeInst()
+  let gt = nskType.genSym "host"
+  result.add nnkTypeSection.newTree(nnkTypeDef.newTree(
+    nnkPragmaExpr.newTree(
+      gt,
+      nnkPragma.newTree(newColonExpr(
+        bindSym "metadata",
+        meta
+      ))
+    ),
+    newEmptyNode(),
+    nnkObjectTy.newTree(newEmptyNode(), newEmptyNode(), newEmptyNode())
+  ))
+  let genret = nnkBracketExpr.newTree(bindSym "WithMetadata", vt, gt)
+  result.add newCall(genret, value)

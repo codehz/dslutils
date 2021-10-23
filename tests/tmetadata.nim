@@ -7,9 +7,7 @@ let typedmeta = 6 ~@ { "meta": tmp }
 let wrong = "" ~~ 1
 
 macro dumpMetadata(target: typed) =
-  let meta = target.metadata
-  for kv in meta:
-    echo treerepr kv
+  echo treerepr target.metadata
 
 template testConcept(value: WithoutMetadata[int]) = discard
 
@@ -22,3 +20,11 @@ static:
 
 echo value
 echo typedmeta
+
+macro gen(v: typed): untyped =
+  let sym = bindSym "tmp"
+  result = withMetadata(v, sym)
+
+let x = gen(5)
+
+dumpMetadata(x)
