@@ -5,6 +5,7 @@ type WithMetadata[T, M: typed] {.borrow: `.`.} = distinct T
 converter `@`*[T, M: typed](source: WithMetadata[T, M]): T = T source
 
 type WithoutMetadata*[T] = concept value
+  T is type
   `@`(value) is T
 
 template metadata(value: untyped) {.pragma.}
