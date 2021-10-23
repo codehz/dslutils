@@ -11,11 +11,11 @@ template metadata(value: untyped) {.pragma.}
 template typedmetadata(value: typed) {.pragma.}
 
 template `~~`*(value: typed, meta: untyped): untyped =
-  type host {.metadata: meta.} = object
+  type host {.metadata: meta, used.} = object
   WithMetadata[typeof(value), host] value
 
 template `~@`*(value: typed, meta: typed): untyped =
-  type host {.typedmetadata: meta.} = object
+  type host {.typedmetadata: meta, used.} = object
   WithMetadata[typeof(value), host] value
 
 func `metadata`*(value: NimNode): NimNode =
@@ -32,10 +32,10 @@ func withMetadata*(value: NimNode, meta: NimNode): NimNode =
   result.add nnkTypeSection.newTree(nnkTypeDef.newTree(
     nnkPragmaExpr.newTree(
       gt,
-      nnkPragma.newTree(newColonExpr(
-        bindSym "metadata",
-        meta
-      ))
+      nnkPragma.newTree(
+        newColonExpr(bindSym "metadata", meta),
+        ident "used"
+      )
     ),
     newEmptyNode(),
     nnkObjectTy.newTree(newEmptyNode(), newEmptyNode(), newEmptyNode())
