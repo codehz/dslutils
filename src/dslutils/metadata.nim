@@ -10,6 +10,9 @@ type WithoutMetadata*[T] = concept value
 template metadata(value: untyped) {.pragma.}
 template typedmetadata(value: typed) {.pragma.}
 
+template `.`*[T](left: WithoutMetadata[T], field: untyped{nkIdent}): untyped =
+  (@left).field
+
 template `~~`*(value: typed, meta: untyped): untyped =
   type host {.metadata: meta.} = object
   WithMetadata[typeof(value), host] value
