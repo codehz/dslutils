@@ -32,3 +32,18 @@ mydsl:
   a.b.c[3] = 4
   var boom {.attrs: 1, boom: 2.} = 5
   var plain = 6
+
+macro testobj(test: untyped) =
+  for item in test[2][2]:
+    case item:
+    of IdentDefs(`a`, (float32), `_`):
+      echo "mixed: ", repr a
+    of IdentDefs(`a*`, `b`, `c`):
+      echo "names: ", repr a
+      echo "types: ", repr b
+      echo "defaults: ", repr c
+  test
+
+type X {.testobj, used.} = object
+  mixed: float32
+  a, b: int

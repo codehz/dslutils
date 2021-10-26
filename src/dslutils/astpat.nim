@@ -70,6 +70,56 @@ func match(this, expr: NimNode, cache: var Table[string, NimNode]): NimNode =
     for idx, item in expr.pairs:
       result.and = match(nnkBracketExpr.newTree(this, newLit idx), item, cache)
 
+func matchExact(this, expr: NimNode, cache: var Table[string, NimNode]): NimNode =
+  let nkid = ident("nnk" & expr[0].strVal)
+  result = equalNode(newDotExpr(this, bindSym "kind"), nkid)
+  var splat = false
+  func idx(src: int, xsplat = splat): int =
+    if xsplat: expr.len - 1 - src
+    else: src
+  func getidx(src: int): NimNode =
+    result = nnkBracketExpr.newTree(this)
+    if splat:
+      result.add nnkPrefix.newTree(bindSym "^", newLit src.idx)
+    else:
+      result.add newLit src.idx
+  var after = newLit true
+  for i, item in expr[1..^1].pairs():
+    case item.kind:
+    of nnkIdent:
+      result.and = equalNode(newDotExpr(getidx(i), bindSym "kind"), ident("nnk" & item.strVal))
+    of nnkCallKinds:
+      result.and = matchExact(getidx(i), item, cache)
+    of nnkAccQuoted:
+      if item.len == 1:
+        if not item[0].strVal.startsWith "_":
+          cache[item[0].strVal] = getidx(i)
+      elif item.len == 2:
+        item[1].expectIdent "*"
+        assert not splat
+        if not item[0].strVal.startsWith "_":
+          cache[item[0].strVal] = nnkBracketExpr.newTree(
+            this,
+            nnkInfix.newTree(
+              ident "..^",
+              newLit idx(i),
+              newLit idx(i, true)
+            )
+          )
+          splat = true
+      else:
+        error("invalid quote: " & repr item)
+    of nnkPar, nnkTupleConstr, nnkStmtList:
+      item.expectLen 1
+      after.and = match(getidx(i), item[0], cache)
+    else:
+      error("invalid element")
+  if splat:
+    result.and = nnkInfix.newTree(bindSym ">=", newDotExpr(this, bindSym "len"), newLit (expr.len - 1))
+  else:
+    result.and = equalNode(newDotExpr(this, bindSym "len"), newLit (expr.len - 1))
+  result.and = after
+
 macro `case`*(stmt: NimNode): untyped =
   result = nnkIfStmt.newTree()
   let expr = stmt[0]
@@ -80,8 +130,11 @@ macro `case`*(stmt: NimNode): untyped =
       var cache: Table[string, NimNode]
       var generated = newLit false
       for conds in branch[0..^2]:
-        conds.expectLen 1
-        generated.or = match(expr, conds[0], cache)
+        if conds.kind in nnkCallKinds:
+          generated.or = matchExact(expr, conds, cache)
+        else:
+          conds.expectLen 1
+          generated.or = match(expr, conds[0], cache)
       let gbody = newStmtList()
       for k, v in cache:
         gbody.add newLetStmt(ident k, v)
@@ -96,3 +149,4 @@ macro `case`*(stmt: NimNode): untyped =
       result.add nnkElifBranch.newTree(generated, gbody)
     else:
       result.add nnkElse.newTree(branch[0])
+  echo repr result
