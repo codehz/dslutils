@@ -149,4 +149,3 @@ macro `case`*(stmt: NimNode): untyped =
       result.add nnkElifBranch.newTree(generated, gbody)
     else:
       result.add nnkElse.newTree(branch[0])
-  echo repr result
