@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.2"
+version       = "0.1.3"
 author        = "CodeHz"
 description   = "A macro collection for creating DSL in nim"
 license       = "MIT"
